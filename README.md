@@ -25,19 +25,16 @@ It also adds three quick-settings tiles, a home-screen widget, a share-sheet tar
 
 ## Quick start
 
-On the desktop:
+On the desktop, build and start the daemon:
 
 ```sh
 cd daemon
 make install
 ```
 
-On the phone, install the APK and open the app:
+On the phone, install the signed APK from the [latest release](https://github.com/SVIGHNESH/VarchController/releases/latest) and open the app.
 
-```sh
-./gradlew :app:assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
+Each release also carries a prebuilt daemon, and [Setup](docs/setup.md) covers installing from it or from the AUR.
 
 Pick the desktop from the list or type its address, then enter the 6-digit code that appears as a desktop notification.
 
@@ -51,6 +48,7 @@ If the phone cannot connect, the firewall is the usual cause.
 - [Protocol](docs/protocol.md): the HTTP and WebSocket API and the full action list.
 - [Security](docs/security.md): what a paired phone can do and what protects the daemon.
 - [Development](docs/development.md): layout, building, tests, and known gaps.
+- [Releasing](docs/releasing.md): the CI and release pipeline, and its one-time setup.
 
 ## Requirements
 

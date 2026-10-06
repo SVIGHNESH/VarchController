@@ -19,7 +19,7 @@ On a desktop without them the app hides those controls.
 The pointer needs nothing extra.
 The daemon speaks Hyprland's virtual-pointer protocol itself, so you do not need `ydotool`, root access, or a uinput rule.
 
-### Install
+### Install from source
 
 ```sh
 cd daemon
@@ -29,6 +29,33 @@ make install
 This builds `varchd`, copies it to `~/.local/bin/varchd`, installs a systemd user unit, and starts it.
 Run the same command again to update.
 Paired phones stay paired across updates.
+
+### Install a release build
+
+Each [release](https://github.com/SVIGHNESH/VarchController/releases/latest) has a static binary for `amd64` and `arm64`, so you do not need Go.
+Download the tarball for your machine and `SHA256SUMS`, then:
+
+```sh
+sha256sum -c SHA256SUMS --ignore-missing
+tar xzf varchd-*-linux-amd64.tar.gz
+cd varchd-*-linux-amd64
+install -Dm755 varchd ~/.local/bin/varchd
+install -Dm644 varchd.service ~/.config/systemd/user/varchd.service
+systemctl --user daemon-reload
+systemctl --user enable --now varchd.service
+```
+
+### Install from the AUR
+
+On Arch, the `varchd` package builds the daemon and pulls in the commands it needs.
+It appears on the AUR once the project has turned AUR publishing on.
+
+```sh
+yay -S varchd
+systemctl --user enable --now varchd.service
+```
+
+The packaged unit lives in `/usr/lib/systemd/user`, so to change the port use `systemctl --user edit varchd.service` and override `ExecStart` there.
 
 Check that it is running:
 
@@ -66,6 +93,13 @@ To listen on a different port, edit `ExecStart` in `~/.config/systemd/user/varch
 | `~/.config/varchd/apps.json` | The app launcher list. |
 
 ## Android app
+
+### Install a release
+
+Download `varch-controller-X.Y.Z.apk` from the [latest release](https://github.com/SVIGHNESH/VarchController/releases/latest) and open it on the phone.
+Android asks you to allow installs from the browser or file manager the first time.
+
+Release APKs are signed with the project's key and debug builds are not, so uninstall one before installing the other.
 
 ### Build and install
 

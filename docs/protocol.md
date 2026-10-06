@@ -13,9 +13,11 @@ These two endpoints need no token.
 
 ### `GET /v1/info`
 
+<!-- x-release-please-start-version -->
 ```json
 { "name": "VARCH", "version": "0.3.0" }
 ```
+<!-- x-release-please-end -->
 
 ### `POST /v1/pair/start`
 

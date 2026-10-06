@@ -15,6 +15,8 @@ daemon/                      Go daemon (varchd)
   system.go                  status readouts and system toggles
   apps.go                    launcher list
   run.go                     the one place that starts other programs
+packaging/aur/               PKGBUILD for the varchd AUR package
+.github/workflows/           CI and the release pipeline, see releasing.md
 app/src/main/java/dev/varch/controller/
   MainActivity.kt            entry point, share intents, volume keys
   RemoteViewModel.kt         pairing, connection, and all app state

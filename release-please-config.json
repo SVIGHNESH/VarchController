@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "simple",
+  "include-component-in-tag": false,
+  "bump-minor-pre-major": true,
+  "packages": {
+    ".": {
+      "package-name": "varch-controller",
+      "extra-files": [
+        "app/build.gradle.kts",
+        "daemon/server.go",
+        "docs/protocol.md",
+        "packaging/aur/PKGBUILD"
+      ]
+    }
+  }
+}
