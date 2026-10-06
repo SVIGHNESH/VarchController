@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ground">#0B0C0A</color>
+    <color name="bone">#E9E4D6</color>
+    <color name="amber">#FFB000</color>
+    <style name="Theme.Varch" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/ground</item>
+    </style>
+</resources>

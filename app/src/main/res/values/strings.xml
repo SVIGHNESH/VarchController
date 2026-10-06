@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Varch Controller</string>
+    <string name="tile_play_pause">Desktop play/pause</string>
+    <string name="tile_mute">Desktop mute</string>
+    <string name="tile_lock">Lock desktop</string>
+    <string name="widget_description">Play/pause, mute and lock your desktop</string>
+    <string name="channel_battery">Desktop battery</string>
+    <string name="shortcut_not_paired">Open Varch Controller and pair with your desktop first</string>
+    <string name="shortcut_unreachable">Can\'t reach the desktop</string>
+    <string name="shortcut_failed">The desktop couldn\'t do that</string>
+</resources>

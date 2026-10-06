@@ -1,0 +1,9 @@
+module varchd
+
+go 1.27
+
+require (
+	github.com/coder/websocket v1.8.15 // indirect
+	github.com/godbus/dbus/v5 v5.2.2 // indirect
+	golang.org/x/sys v0.27.0 // indirect
+)
