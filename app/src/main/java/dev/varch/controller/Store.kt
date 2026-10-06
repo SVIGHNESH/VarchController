@@ -8,6 +8,13 @@ import dev.varch.controller.net.ThemeColors
 
 data class Pairing(val endpoint: Endpoint, val hostName: String, val token: String)
 
+/**
+ * The desktop as the widgets last fetched it. [state] and [system] are the
+ * daemon's JSON, kept raw so they survive the process, and [art] names the
+ * cover that is saved beside them.
+ */
+data class Snapshot(val state: String = "", val system: String = "", val at: Long = 0, val online: Boolean = true, val art: String = "")
+
 /** Persists the one desktop this phone is paired with, in app-private storage. */
 class Store(context: Context) {
     private val prefs = context.getSharedPreferences("pairing", Context.MODE_PRIVATE)
@@ -25,6 +32,8 @@ class Store(context: Context) {
             putString(NAME, pairing.hostName)
             putString(TOKEN, pairing.token)
         }
+        // A sync that was still running at unpair time may have written one for the old desktop.
+        snapshot = null
     }
 
     /** Whether the periodic desktop battery check is enabled. */
@@ -52,6 +61,29 @@ class Store(context: Context) {
             if (value == null) remove(COLORS) else putString(COLORS, listOf(value.background, value.foreground, value.accent, value.red).joinToString(","))
         }
 
+    var snapshot: Snapshot?
+        get() {
+            if (!prefs.contains(SNAPSHOT_ONLINE)) return null
+            return Snapshot(
+                prefs.getString(SNAPSHOT_STATE, "") ?: "",
+                prefs.getString(SNAPSHOT_SYSTEM, "") ?: "",
+                prefs.getLong(SNAPSHOT_AT, 0),
+                prefs.getBoolean(SNAPSHOT_ONLINE, true),
+                prefs.getString(SNAPSHOT_ART, "") ?: "",
+            )
+        }
+        set(value) = prefs.edit {
+            if (value == null) {
+                listOf(SNAPSHOT_STATE, SNAPSHOT_SYSTEM, SNAPSHOT_AT, SNAPSHOT_ONLINE, SNAPSHOT_ART).forEach(::remove)
+            } else {
+                putString(SNAPSHOT_STATE, value.state)
+                putString(SNAPSHOT_SYSTEM, value.system)
+                putLong(SNAPSHOT_AT, value.at)
+                putBoolean(SNAPSHOT_ONLINE, value.online)
+                putString(SNAPSHOT_ART, value.art)
+            }
+        }
+
     fun clear() {
         prefs.edit { clear() }
     }
@@ -65,5 +97,10 @@ class Store(context: Context) {
         const val LAST_ALERT = "last_alert"
         const val MATCH_THEME = "match_theme"
         const val COLORS = "colors"
+        const val SNAPSHOT_STATE = "snapshot_state"
+        const val SNAPSHOT_SYSTEM = "snapshot_system"
+        const val SNAPSHOT_AT = "snapshot_at"
+        const val SNAPSHOT_ONLINE = "snapshot_online"
+        const val SNAPSHOT_ART = "snapshot_art"
     }
 }

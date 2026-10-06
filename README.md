@@ -25,7 +25,8 @@ The app has five tabs.
 
 The app recolours itself to match the desktop's Omarchy theme, and follows along when you change it.
 
-It also adds three quick-settings tiles, a home-screen widget, a share-sheet target, and optional desktop battery alerts.
+It also adds three quick-settings tiles, four home-screen widgets, a share-sheet target, and optional desktop battery alerts.
+The widgets show what is playing, the desktop's status and its workspaces, and control them without opening the app.
 
 ## Requirements
 

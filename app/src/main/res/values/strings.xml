@@ -5,6 +5,30 @@
     <string name="tile_mute">Desktop mute</string>
     <string name="tile_lock">Lock desktop</string>
     <string name="widget_description">Play/pause, mute and lock your desktop</string>
+    <string name="widget_media_label">Now playing</string>
+    <string name="widget_media_description">What the desktop is playing, with transport and volume keys</string>
+    <string name="widget_workspaces_label">Workspaces</string>
+    <string name="widget_workspaces_description">Switch workspace and see which ones have windows</string>
+    <string name="widget_system_label">Desktop status</string>
+    <string name="widget_system_description">Battery, CPU, memory and temperature, with lock, mic and night light keys</string>
+    <string name="widget_remote_label">Quick keys</string>
+    <string name="widget_host">DESKTOP</string>
+    <string name="widget_idle">Nothing playing</string>
+    <string name="widget_blank" translatable="false">--</string>
+    <string name="widget_minus" translatable="false">\u2212</string>
+    <string name="widget_plus" translatable="false">+</string>
+    <string name="widget_volume">VOL</string>
+    <string name="widget_previous">Previous track</string>
+    <string name="widget_next">Next track</string>
+    <string name="widget_volume_down">Desktop volume down</string>
+    <string name="widget_volume_up">Desktop volume up</string>
+    <string name="widget_battery">BAT</string>
+    <string name="widget_cpu">CPU</string>
+    <string name="widget_memory">MEM</string>
+    <string name="widget_temperature">TEMP</string>
+    <string name="widget_lock">LOCK</string>
+    <string name="widget_mic">MIC</string>
+    <string name="widget_night">NIGHT</string>
     <string name="channel_battery">Desktop battery</string>
     <string name="channel_cast">Screen casting</string>
     <string name="cast_notification">Casting this screen to %1$s</string>

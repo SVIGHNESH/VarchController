@@ -20,7 +20,8 @@ packaging/aur/               PKGBUILD for the varchd AUR package
 app/src/main/java/dev/varch/controller/
   MainActivity.kt            entry point, share intents, volume keys
   RemoteViewModel.kt         pairing, connection, and all app state
-  Shortcuts.kt               tiles, widget, one-shot actions
+  Shortcuts.kt               tiles and one-shot actions
+  Widgets.kt                 home-screen widgets and their snapshot of the desktop
   BatteryAlerts.kt           periodic battery check
   CastService.kt             casts the phone's screen (MediaProjection, H.264)
   net/                       protocol types, HTTP client, mDNS discovery
@@ -105,6 +106,8 @@ VARCHD_ADDR=127.0.0.1:17421 VARCHD_LOG=/tmp/varchd.log ./gradlew :app:testDebugU
 - The live view of the desktop is tested from the daemon to the app's network client, and its screen is rendered, but it has not been used on a phone.
 - The 0.2.0 features have been tested on the desktop side and in rendered screenshots, and not yet on a physical phone.
   That covers trackpad feel, live typing through a phone keyboard, the tiles, the widget, the share sheet and battery alerts.
+- The home-screen widgets are rendered by `ScreenshotTest` and have not been placed on a real launcher.
+  Their fetch after a key press, the half-hourly update and the bundled font inside a launcher are untested.
 - Theme switching, the Wi-Fi and Bluetooth toggles, reboot, shut down and `open.url` have unit tests for their command mapping and have not been fired on a real desktop.
 - Keyboard backlight control exists and is untested, because the development laptop has no backlight LED.
 - Wake-on-LAN is not implemented.

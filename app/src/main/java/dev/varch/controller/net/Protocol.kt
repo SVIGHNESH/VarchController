@@ -104,6 +104,7 @@ object Action {
     const val SEEK = "media.seek"
     const val SELECT_PLAYER = "media.select"
     const val VOLUME = "volume.set"
+    const val VOLUME_STEP = "volume.step"
     const val MUTE = "volume.mute_toggle"
     const val BRIGHTNESS = "brightness.set"
     const val WORKSPACE = "workspace.switch"
@@ -190,7 +191,7 @@ private fun JSONObject.strings(key: String): List<String> {
 
 private fun JSONObject.booleanOrNull(key: String) = if (isNull(key)) null else optBoolean(key)
 
-private fun parseState(json: JSONObject): DesktopState {
+fun parseState(json: JSONObject): DesktopState {
     val volume = json.optJSONObject("volume") ?: JSONObject()
     val media = json.optJSONObject("media") ?: JSONObject()
     val workspaces = json.optJSONObject("workspaces") ?: JSONObject()

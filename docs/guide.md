@@ -95,7 +95,7 @@ Turn the key off to keep the default graphite and amber.
   <img src="images/theme_latte_system.png" width="230" alt="App matching the Catppuccin Latte theme">
 </p>
 
-The home-screen widget keeps the default colours.
+The home-screen widgets keep the default colours.
 
 Sections for features the desktop lacks do not appear.
 A laptop without a keyboard backlight shows no KEYBOARD LIGHT section.
@@ -144,12 +144,35 @@ Varch Controller appears in Android's share sheet for text.
 A shared link opens on the desktop.
 Any other text goes to the desktop clipboard.
 
-## Tiles and widget
+## Tiles and widgets
 
 Three quick-settings tiles are available: play/pause, mute, and lock.
 Add them from the quick-settings editor.
 
-The home-screen widget has the same three keys.
+Four home-screen widgets control the desktop without opening the app.
+Long-press the home screen, choose Widgets, and look under Varch Controller.
 
-Both work with the app closed.
+<img src="images/widgets.png" width="260" alt="The four home-screen widgets">
+
+- **Now playing** shows the track, the artist and the cover, with previous, play/pause and next keys.
+  The `−` and `+` keys change the volume in 5% steps, and the key between them shows the level and mutes.
+- **Desktop status** shows battery, CPU, memory and temperature, with LOCK, MIC and NIGHT keys.
+  MIC and NIGHT are lit while the mic is muted and the night light is on.
+- **Workspaces** has a key for each workspace.
+  The lit key is the current one and a dot marks workspaces that have windows.
+  It is one row of ten keys, and becomes two rows of five when you make it taller.
+- **Quick keys** is the smallest: play/pause, mute and lock, with nothing to read.
+
+Tiles and widgets work with the app closed.
 Each press sends one request, and a toast tells you if the desktop did not answer.
+
+### How fresh a widget is
+
+A widget does not stay connected, because that would drain the phone's battery.
+It fetches the desktop's state when you add it, after each key press, when you leave the app, and every half hour.
+The time in its top right corner is when it last heard from the desktop.
+Tap that time to fetch again, or tap the desktop's name to open the app.
+`OFFLINE` there means the last attempt did not reach the desktop, and the widget is showing what it knew before.
+
+Widgets keep the default colours, and do not follow the desktop theme.
+The power keys that need a hold in the app, such as SUSPEND and SHUT DOWN, are not on any widget, because a widget cannot tell a hold from a tap.

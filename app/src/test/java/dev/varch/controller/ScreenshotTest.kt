@@ -1,9 +1,23 @@
 package dev.varch.controller
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.widget.FrameLayout
+import android.widget.RemoteViews
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
@@ -137,6 +151,51 @@ class ScreenshotTest {
         compose.setContent { Surface(content) }
         compose.onRoot().captureRoboImage("build/outputs/roborazzi/$name.png")
     }
+
+    /** Draws widgets the way a launcher does, by inflating their RemoteViews over a wallpaper. */
+    private fun widgets(name: String, vararg rows: Pair<Int, (Context) -> RemoteViews>) = shoot(name) {
+        Column(
+            Modifier.fillMaxSize().background(Color(0xFF2B3440)).padding(horizontal = 20.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            for ((height, views) in rows) {
+                AndroidView({ views(it).apply(it, FrameLayout(it)) }, Modifier.fillMaxWidth().height(height.dp))
+            }
+        }
+    }
+
+    private val cover = Bitmap.createBitmap(128, 128, Bitmap.Config.ARGB_8888).apply {
+        val canvas = Canvas(this)
+        canvas.drawColor(0xFF2E5E4E.toInt())
+        canvas.drawCircle(64f, 64f, 34f, Paint().apply { color = 0xFFE8C170.toInt() })
+    }
+    private val seen = WidgetData("VARCH", desktop.copy(media = desktop.media.copy(status = "Playing")), system, at = 1_780_000_000_000, art = cover)
+
+    @Test
+    fun widgets() = widgets(
+        "widgets",
+        150 to { Widgets.media(it, seen) },
+        150 to { Widgets.system(it, seen) },
+        150 to { Widgets.workspaces(it, seen, tall = true) },
+        64 to { Widgets.workspaces(it, seen, tall = false) },
+        64 to { Widgets.remote(it) },
+    )
+
+    @Test
+    fun widgetsStale() = widgets(
+        "widgets_stale",
+        // Minimum size, muted and idle.
+        110 to { Widgets.media(it, WidgetData("VARCH", desktop.copy(volume = Volume(0.8f, true), media = Media()), system, at = 1_780_000_000_000)) },
+        110 to {
+            val low = system.copy(battery = BatteryInfo(14, charging = false, full = false), micMuted = true, nightLight = true)
+            Widgets.system(it, WidgetData("VARCH", desktop, low, at = 1_780_000_000_000, online = false))
+        },
+        110 to { Widgets.media(it, seen) },
+        130 to { Widgets.media(it, null) },
+        130 to { Widgets.media(it, WidgetData("VARCH", online = false)) },
+        // A desktop with no battery or night light, and a daemon too old for the state endpoint.
+        110 to { Widgets.system(it, WidgetData("TOWER", system = system.copy(battery = null, nightLight = null), at = 1_780_000_000_000)) },
+    )
 
     private fun shell(name: String, state: RemoteUi, tab: Tab = Tab.Deck) = shoot(name) { RemoteShell(state, NoActions, tab) }
 

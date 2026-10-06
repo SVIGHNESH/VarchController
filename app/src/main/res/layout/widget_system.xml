@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Drawn by the launcher, which has no app theme behind it, so the background is not overdraw. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ground"
+    android:orientation="vertical"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp"
+    tools:ignore="Overdraw">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="22dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_host"
+            style="@style/WidgetLabel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:text="@string/widget_host" />
+
+        <TextView
+            android:id="@+id/widget_sync"
+            style="@style/WidgetLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="0dp" />
+    </LinearLayout>
+
+    <!-- The readouts take whatever height the keys leave; four shallow boxes cost nothing to measure twice. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginBottom="6dp"
+        android:layout_weight="1"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        tools:ignore="NestedWeights">
+
+        <LinearLayout
+            android:id="@+id/widget_battery"
+            style="@style/WidgetReadout.Gap">
+
+            <TextView
+                android:id="@+id/widget_battery_label"
+                style="@style/WidgetLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_battery" />
+
+            <TextView
+                android:id="@+id/widget_battery_value"
+                style="@style/WidgetTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_blank" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_cpu"
+            style="@style/WidgetReadout.Gap">
+
+            <TextView
+                android:id="@+id/widget_cpu_label"
+                style="@style/WidgetLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_cpu" />
+
+            <TextView
+                android:id="@+id/widget_cpu_value"
+                style="@style/WidgetTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_blank" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_memory"
+            style="@style/WidgetReadout.Gap">
+
+            <TextView
+                android:id="@+id/widget_memory_label"
+                style="@style/WidgetLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_memory" />
+
+            <TextView
+                android:id="@+id/widget_memory_value"
+                style="@style/WidgetTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_blank" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_temperature"
+            style="@style/WidgetReadout">
+
+            <TextView
+                android:id="@+id/widget_temperature_label"
+                style="@style/WidgetLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_temperature" />
+
+            <TextView
+                android:id="@+id/widget_temperature_value"
+                style="@style/WidgetTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_blank" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_lock"
+            style="@style/WidgetKey"
+            android:text="@string/widget_lock" />
+
+        <TextView
+            android:id="@+id/widget_mic"
+            style="@style/WidgetKey.Next"
+            android:text="@string/widget_mic" />
+
+        <TextView
+            android:id="@+id/widget_night"
+            style="@style/WidgetKey.Next"
+            android:text="@string/widget_night" />
+    </LinearLayout>
+</LinearLayout>

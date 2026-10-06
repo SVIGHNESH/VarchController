@@ -47,8 +47,9 @@ Everything below needs `Authorization: Bearer <token>` and returns `401` without
 | Endpoint | Purpose |
 | --- | --- |
 | `GET /v1/ws` | The live connection described below. |
-| `POST /v1/action` | Runs one action and returns its result. The tiles and widget use this. |
-| `GET /v1/status` | Returns the `system` object. The battery alerts use this. |
+| `POST /v1/action` | Runs one action and returns its result. The tiles and widgets use this. |
+| `GET /v1/state` | Returns the `state` object. The widgets use this. |
+| `GET /v1/status` | Returns the `system` object. The widgets and the battery alerts use this. |
 | `GET /v1/screenshot` | A JPEG of every monitor. |
 | `GET /v1/art` | The current track's cover image, or `404`. |
 | `GET /v1/cast/screen` | A WebSocket that streams the desktop's screen to the phone. |
@@ -163,6 +164,7 @@ Pointer and key actions get a result only when they fail.
 | `media.seek` | `value` is the position in seconds. |
 | `media.select` | `text` is a player id from `media.players`. |
 | `volume.set` | `value` from 0 to 1. |
+| `volume.step` | `value` is added to the level, from -1 to 1 and not 0. The level stops at 100%. |
 | `volume.mute_toggle` | None. |
 | `brightness.set` | `value` from 0 to 1. The daemon never goes below 1%. |
 
