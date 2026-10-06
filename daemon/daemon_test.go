@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -47,6 +48,12 @@ func (f *fakeRunner) Run(_ context.Context, name string, args ...string) (string
 			{"address":"0xc3","class":"scratch","title":"pad","mapped":true,"workspace":{"id":-98},"focusHistoryID":2}]`, nil
 	case "pactl -f json list sinks":
 		return `[{"name":"speakers","description":"Built-in"},{"name":"headset","description":"Headset"}]`, nil
+	case "grim -c -t ppm -":
+		// A 4x2 picture whose content changes on every capture.
+		f.mu.Lock()
+		shade := byte(len(f.calls))
+		f.mu.Unlock()
+		return "P6\n4 2\n255\n" + string(bytes.Repeat([]byte{shade, 0, 255 - shade}, 8)), nil
 	case "wl-paste --no-newline --type text":
 		return "from desktop", nil
 	}
@@ -272,6 +279,40 @@ func TestPositionDriftIsNotAChange(t *testing.T) {
 	}
 }
 
+func TestShrinkPPM(t *testing.T) {
+	// 4x2, left half black and right half white.
+	pix := []byte{0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255, 255, 255}
+	img, err := shrinkPPM(append([]byte("P6\n4 2\n255\n"), pix...), 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b := img.Bounds(); b.Dx() != 2 || b.Dy() != 1 {
+		t.Fatalf("size = %v", b)
+	}
+	if img.Pix[0] != 0 || img.Pix[4] != 255 || img.Pix[3] != 255 {
+		t.Errorf("pixels = %v", img.Pix)
+	}
+	if same, _ := shrinkPPM(append([]byte("P6\n4 2\n255\n"), pix...), 4); same.Bounds().Dx() != 4 {
+		t.Error("a picture within the limit should keep its size")
+	}
+	if _, err := shrinkPPM([]byte("P6\n4 2\n255\nshort"), 4); err == nil {
+		t.Error("a truncated capture should be rejected")
+	}
+	if _, err := shrinkPPM([]byte("\x89PNG"), 4); err == nil {
+		t.Error("a non-PPM capture should be rejected")
+	}
+}
+
+func TestParseColors(t *testing.T) {
+	c := parseColors("mode = \"dark\"\naccent = \"#7AA2F7\"\n\nbackground = \"#1a1b26\"\nforeground = \"#a9b1d6\"\nred=\"#f7768e\"\nbad = \"blue\"\n")
+	if c == nil || *c != (Colors{"#1a1b26", "#a9b1d6", "#7aa2f7", "#f7768e"}) {
+		t.Errorf("colors = %+v", c)
+	}
+	if parseColors("accent = \"#ffffff\"") != nil {
+		t.Error("a theme without background and foreground has no usable palette")
+	}
+}
+
 func TestWaylandEncoding(t *testing.T) {
 	if got := wlString("abc"); len(got) != 8 || got[0] != 4 || got[7] != 0 {
 		t.Errorf("wlString(abc) = %v", got)
@@ -490,4 +531,103 @@ func TestServerEndToEnd(t *testing.T) {
 	if st := call("wrong"); st != http.StatusUnauthorized {
 		t.Errorf("POST /v1/action without pairing: %d", st)
 	}
+}
+
+type sink struct {
+	mu     sync.Mutex
+	data   bytes.Buffer
+	closed bool
+}
+
+func (k *sink) Write(p []byte) (int, error) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.data.Write(p)
+}
+
+func (k *sink) Close() error {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.closed = true
+	return nil
+}
+
+func TestCasting(t *testing.T) {
+	desk, _, _, _ := newDesktop(t)
+	auth := newAuth(t)
+	id, code, _ := auth.StartPairing("Pixel")
+	token, _ := auth.FinishPairing(id, code)
+
+	got := &sink{}
+	gone := make(chan struct{})
+	srv := NewServer(desk, auth, func(string, string) {})
+	srv.viewer = func(_ context.Context, title string) (io.WriteCloser, <-chan struct{}, error) {
+		if title != "Pixel screen" {
+			t.Errorf("viewer title = %q", title)
+		}
+		return got, gone, nil
+	}
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	dial := func(path, tok string) (*websocket.Conn, *http.Response, error) {
+		return websocket.Dial(ctx, "ws"+strings.TrimPrefix(ts.URL, "http")+path, &websocket.DialOptions{
+			HTTPHeader: http.Header{"Authorization": {"Bearer " + tok}},
+		})
+	}
+
+	if _, res, err := dial("/v1/cast/phone", "wrong"); err == nil || res.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("unpaired cast: %v", err)
+	}
+
+	// Phone to desktop: bytes reach the viewer in order.
+	phone, _, err := dial("/v1/cast/phone", token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, res, err := dial("/v1/cast/phone", token); err == nil || res.StatusCode != http.StatusConflict {
+		t.Errorf("second cast should be refused: %v", err)
+	}
+	phone.Write(ctx, websocket.MessageBinary, []byte("frame-1 "))
+	phone.Write(ctx, websocket.MessageBinary, []byte("frame-2"))
+	for deadline := time.Now().Add(2 * time.Second); ; time.Sleep(5 * time.Millisecond) {
+		got.mu.Lock()
+		n := got.data.Len()
+		got.mu.Unlock()
+		if n == len("frame-1 frame-2") || time.Now().After(deadline) {
+			break
+		}
+	}
+	// Closing the viewer window ends the cast for the phone.
+	close(gone)
+	if _, _, err := phone.Read(ctx); err == nil {
+		t.Error("the phone should be disconnected when the viewer closes")
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		got.mu.Lock()
+		data, closed := got.data.String(), got.closed
+		got.mu.Unlock()
+		if data == "frame-1 frame-2" && closed {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("viewer got %q, closed=%v", data, closed)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// Desktop to phone: frames keep coming until the phone leaves.
+	view, _, err := dial("/v1/cast/screen", token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		kind, _, err := view.Read(ctx)
+		if err != nil || kind != websocket.MessageBinary {
+			t.Fatalf("frame: kind=%v err=%v", kind, err)
+		}
+	}
+	view.Close(websocket.StatusNormalClosure, "")
 }

@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Only for the optional desktop battery alerts. -->
+    <!-- Casting the phone's screen runs as a foreground service while it is on. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <!-- For the optional desktop battery alerts and the casting notification. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- The daemon is reached by LAN address over plain HTTP/WebSocket.
          The pairing token must never leave the device, so backups are off. -->
@@ -44,6 +47,11 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_remote_info" />
         </receiver>
+
+        <service
+            android:name=".CastService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
 
         <service
             android:name=".PlayPauseTile"

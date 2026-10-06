@@ -430,6 +430,8 @@ fun Trackpad(
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    // Bare pads are laid over something else, such as the live view of the desktop.
+    bare: Boolean = false,
 ) {
     val haptics = LocalHapticFeedback.current
     val move by rememberUpdatedState(onMove)
@@ -437,8 +439,8 @@ fun Trackpad(
     val click by rememberUpdatedState(onClick)
     Box(
         modifier
-            .background(if (enabled) Ink.Panel else Color.Transparent)
-            .border(1.dp, Ink.Rule)
+            .background(if (enabled && !bare) Ink.Panel else Color.Transparent)
+            .border(1.dp, if (bare) Color.Transparent else Ink.Rule)
             .semantics { contentDescription = "Trackpad" }
             .pointerInput(enabled) {
                 if (!enabled) return@pointerInput

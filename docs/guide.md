@@ -82,6 +82,20 @@ See [Setup](setup.md#app-launcher) for how to edit that list.
 - LOCK is a tap.
   SUSPEND, REBOOT and SHUT DOWN need a hold.
 
+### Matching the desktop theme
+
+With MATCH DESKTOP THEME on, the app takes its colours from the desktop's Omarchy theme and changes within a few seconds of a theme switch.
+It reads the theme's background, text and accent colours and mixes the rest, so it works with any theme, light or dark.
+If a theme's colours are too close together to read, the app strengthens them.
+Turn the key off to keep the default graphite and amber.
+
+<p>
+  <img src="images/theme_tokyo_night_deck.png" width="230" alt="App matching the Tokyo Night theme">
+  <img src="images/theme_latte_system.png" width="230" alt="App matching the Catppuccin Latte theme">
+</p>
+
+The home-screen widget keeps the default colours.
+
 Sections for features the desktop lacks do not appear.
 A laptop without a keyboard backlight shows no KEYBOARD LIGHT section.
 
@@ -99,8 +113,29 @@ Android does not allow a shorter interval, so an alert can arrive up to 15 minut
 - DESK → PHONE copies the desktop's clipboard to the phone and shows it.
 - The text box sends anything you type or paste.
   OPEN LINK lights up when the text is a web address and opens it in the desktop browser.
-- CAPTURE DESKTOP takes a screenshot of every monitor.
+- CAPTURE takes a screenshot of every monitor.
   Tap the image to view it full screen, pinch to zoom, and tap again to close.
+
+### Watching the desktop
+
+WATCH LIVE shows the desktop's screen on the phone, a few frames a second.
+The picture is also a trackpad, so you can point and click at what you see, and LEFT and RIGHT work as on the PAD tab.
+Turn the phone sideways for a larger picture.
+
+<img src="images/live_view.png" width="260" alt="Live view of the desktop">
+
+The stream is half resolution on a 1080p screen and sends nothing while the desktop is still.
+Expect about 3 Mbit/s while a video plays.
+Use CAPTURE when you need a sharp, full-resolution image.
+
+### Casting the phone
+
+CAST TO DESKTOP shows the phone's screen in a window on the desktop.
+Android asks for permission each time, and shows a notification with a Stop button while the cast runs.
+Close the window on the desktop, or tap STOP CASTING, to end it.
+
+The desktop needs `mpv` for this.
+Sound is not sent, and one phone can cast at a time.
 
 ### From other apps
 

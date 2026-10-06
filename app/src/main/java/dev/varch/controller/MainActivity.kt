@@ -9,7 +9,10 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.runtime.SideEffect
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.LifecycleStartEffect
+import dev.varch.controller.ui.Ink
 import dev.varch.controller.ui.RemoteShell
 import dev.varch.controller.ui.SetupScreen
 import dev.varch.controller.ui.Surface
@@ -26,6 +29,14 @@ class MainActivity : ComponentActivity() {
             LifecycleStartEffect(vm) {
                 vm.start()
                 onStopOrDispose { vm.stop() }
+            }
+            // Dark icons on a light desktop theme, light icons otherwise.
+            val light = Ink.light
+            SideEffect {
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = light
+                    isAppearanceLightNavigationBars = light
+                }
             }
             Surface {
                 val remote = vm.remote

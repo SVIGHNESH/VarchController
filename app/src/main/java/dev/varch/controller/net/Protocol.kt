@@ -71,6 +71,9 @@ data class BatteryInfo(val percent: Int, val charging: Boolean, val full: Boolea
 
 data class Sink(val name: String, val label: String)
 
+/** The desktop theme's base colours, each "#rrggbb". [red] may be empty. */
+data class ThemeColors(val background: String, val foreground: String, val accent: String, val red: String = "")
+
 /** Slower-moving desktop state. A null field means the desktop lacks that feature. */
 data class SystemState(
     val battery: BatteryInfo? = null,
@@ -86,6 +89,7 @@ data class SystemState(
     val sink: String = "",
     val sinks: List<Sink> = emptyList(),
     val theme: String = "",
+    val colors: ThemeColors? = null,
     val kbdBacklight: Float? = null,
 )
 
@@ -242,6 +246,9 @@ fun parseSystem(json: JSONObject): SystemState {
         sink = json.optString("sink"),
         sinks = json.objects("sinks").map { Sink(it.optString("name"), it.optString("label")) },
         theme = json.optString("theme"),
+        colors = json.optJSONObject("colors")?.let {
+            ThemeColors(it.optString("background"), it.optString("foreground"), it.optString("accent"), it.optString("red"))
+        },
         kbdBacklight = if (json.isNull("kbd_backlight")) null else json.optDouble("kbd_backlight").toFloat(),
     )
 }

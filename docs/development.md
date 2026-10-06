@@ -8,7 +8,8 @@ daemon/                      Go daemon (varchd)
   server.go                  HTTP endpoints, WebSocket, state polling
   auth.go                    pairing codes and device tokens
   desktop.go                 the action list and its validation
-  hypr.go                    workspaces, windows, screenshots
+  hypr.go                    workspaces, windows, screen capture
+  cast.go                    screen casting in both directions
   pointer.go                 Wayland virtual-pointer client
   mpris.go                   media players over D-Bus
   system.go                  status readouts and system toggles
@@ -19,6 +20,7 @@ app/src/main/java/dev/varch/controller/
   RemoteViewModel.kt         pairing, connection, and all app state
   Shortcuts.kt               tiles, widget, one-shot actions
   BatteryAlerts.kt           periodic battery check
+  CastService.kt             casts the phone's screen (MediaProjection, H.264)
   net/                       protocol types, HTTP client, mDNS discovery
   ui/                        one file per tab, plus shared controls and theme
 ```
@@ -65,6 +67,8 @@ Requires JDK 17 or newer and Android SDK platform 37.
 ```
 
 The UI is drawn with Compose foundation primitives and no Material components.
+`Ink` in `ui/Theme.kt` holds the current palette as Compose state, so every screen redraws when the desktop theme changes.
+`Palette.from` derives that palette from the theme's base colours.
 Colours and type live in `ui/Theme.kt`, and the shared keys, faders and trackpad live in `ui/Controls.kt`.
 
 ### Looking at the UI without a device
@@ -93,6 +97,9 @@ VARCHD_ADDR=127.0.0.1:17421 VARCHD_LOG=/tmp/varchd.log ./gradlew :app:testDebugU
 
 ## Known gaps
 
+- Casting the phone's screen has never run on a phone.
+  The desktop half is tested with a synthetic H.264 stream, and `CastService` is written against the Android API without a device to run it on.
+- The live view of the desktop is tested from the daemon to the app's network client, and its screen is rendered, but it has not been used on a phone.
 - The 0.2.0 features have been tested on the desktop side and in rendered screenshots, and not yet on a physical phone.
   That covers trackpad feel, live typing through a phone keyboard, the tiles, the widget, the share sheet and battery alerts.
 - Theme switching, the Wi-Fi and Bluetooth toggles, reboot, shut down and `open.url` have unit tests for their command mapping and have not been fired on a real desktop.

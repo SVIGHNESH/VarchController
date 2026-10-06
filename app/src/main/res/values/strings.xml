@@ -6,6 +6,9 @@
     <string name="tile_lock">Lock desktop</string>
     <string name="widget_description">Play/pause, mute and lock your desktop</string>
     <string name="channel_battery">Desktop battery</string>
+    <string name="channel_cast">Screen casting</string>
+    <string name="cast_notification">Casting this screen to %1$s</string>
+    <string name="cast_stop">Stop</string>
     <string name="shortcut_not_paired">Open Varch Controller and pair with your desktop first</string>
     <string name="shortcut_unreachable">Can\'t reach the desktop</string>
     <string name="shortcut_failed">The desktop couldn\'t do that</string>

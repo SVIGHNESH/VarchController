@@ -17,7 +17,9 @@ The app has five tabs.
 - **PAD** is a trackpad and keyboard, with a SLIDES mode for presentations.
 - **DESK** lists open windows and launches apps.
 - **SYS** shows battery, CPU, memory and temperature, and holds the system toggles and power keys.
-- **SHARE** moves clipboard text, links and screenshots between the phone and the desktop.
+- **SHARE** moves clipboard text, links and screenshots between the phone and the desktop, and casts either screen to the other.
+
+The app recolours itself to match the desktop's Omarchy theme, and follows along when you change it.
 
 It also adds three quick-settings tiles, a home-screen widget, a share-sheet target, and optional desktop battery alerts.
 

@@ -3,8 +3,10 @@ package dev.varch.controller
 import dev.varch.controller.net.BatteryInfo
 import dev.varch.controller.net.Endpoint
 import dev.varch.controller.net.ServerMessage
+import dev.varch.controller.net.ThemeColors
 import dev.varch.controller.net.actionBody
 import dev.varch.controller.net.parseServerMessage
+import dev.varch.controller.ui.Palette
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -86,6 +88,38 @@ class ProtocolTest {
         assertTrue(state.media.canSeek)
         assertEquals("kitty", state.windows.single().appClass)
         assertTrue(state.windows.single().floating)
+    }
+
+    @Test
+    fun parsesThemeColours() {
+        val system = (parseServerMessage(
+            """{"type":"system","system":{"colors":{"background":"#1a1b26","foreground":"#a9b1d6","accent":"#7aa2f7","red":""}}}""",
+        ) as ServerMessage.SystemUpdate).system
+        assertEquals(ThemeColors("#1a1b26", "#a9b1d6", "#7aa2f7", ""), system.colors)
+        val none = (parseServerMessage("""{"type":"system","system":{"colors":null}}""") as ServerMessage.SystemUpdate).system
+        assertNull(none.colors)
+    }
+
+    @Test
+    fun paletteStaysReadableOnAnyTheme() {
+        val themes = listOf(
+            ThemeColors("#1a1b26", "#a9b1d6", "#7aa2f7", "#f7768e"), // dark
+            ThemeColors("#eff1f5", "#4c4f69", "#1e66f5", "#d20f39"), // light
+            ThemeColors("#ffffff", "#000000", "#6e6e6e", "#2a2a2a"), // light, with a grey in the red slot
+            ThemeColors("#202020", "#303030", "#252525", ""), // nearly no contrast anywhere
+        )
+        for (theme in themes) {
+            val p = Palette.from(theme)!!
+            assertTrue("text on ground in $theme", Palette.contrast(p.bone, p.ground) >= 7f)
+            assertTrue("secondary text in $theme", Palette.contrast(p.dim, p.ground) >= 3f)
+            assertTrue("accent in $theme", Palette.contrast(p.amber, p.ground) >= 3f)
+            assertTrue("warning in $theme", Palette.contrast(p.red, p.ground) >= 3f)
+        }
+        // A grey "red" is replaced, so warning keys still read as warnings.
+        val warning = Palette.from(themes[2])!!.red
+        assertTrue(warning.red > warning.green * 1.3f)
+        assertTrue(Palette.from(themes[0])!!.light.not() && Palette.from(themes[1])!!.light)
+        assertNull(Palette.from(ThemeColors("blue", "#000000", "#ffffff")))
     }
 
     @Test
