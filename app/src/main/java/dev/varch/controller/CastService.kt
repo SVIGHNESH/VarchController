@@ -22,8 +22,8 @@ import android.os.HandlerThread
 import android.os.IBinder
 import android.os.Looper
 import android.util.DisplayMetrics
+import android.view.Display
 import android.view.Surface
-import android.view.WindowManager
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -46,11 +46,24 @@ class CastService : Service() {
     private var worker: HandlerThread? = null
     private var projection: MediaProjection? = null
     private var display: VirtualDisplay? = null
+    // Read by the encoder's callbacks, which run on the worker thread.
+    @Volatile
     private var codec: MediaCodec? = null
     private var surface: Surface? = null
+    private var size: Triple<Int, Int, Int>? = null
     private var socket: WebSocket? = null
     private var congested = false
     private var ended = false
+
+    private val rotation = object : DisplayManager.DisplayListener {
+        override fun onDisplayAdded(displayId: Int) {}
+
+        override fun onDisplayRemoved(displayId: Int) {}
+
+        override fun onDisplayChanged(displayId: Int) {
+            if (displayId == Display.DEFAULT_DISPLAY) resize()
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -113,46 +126,8 @@ class CastService : Service() {
         val projection = projection ?: return end("Screen capture was not allowed.")
         val (width, height, dpi) = captureSize()
         try {
-            val thread = HandlerThread("varch-cast").also { it.start() }
-            worker = thread
-            val handler = Handler(thread.looper)
-            val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height).apply {
-                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-                setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE)
-                setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
-                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEYFRAME_SECONDS)
-                // A still screen produces no frames; repeating the last one keeps the viewer fed.
-                setLong(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 200_000)
-            }
-            val encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
-            codec = encoder
-            encoder.setCallback(object : MediaCodec.Callback() {
-                override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {}
-
-                override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {}
-
-                override fun onOutputBufferAvailable(codec: MediaCodec, index: Int, info: MediaCodec.BufferInfo) {
-                    try {
-                        val buffer = codec.getOutputBuffer(index)
-                        if (buffer != null && info.size > 0) {
-                            buffer.position(info.offset).limit(info.offset + info.size)
-                            val vital = info.flags and (MediaCodec.BUFFER_FLAG_KEY_FRAME or MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0
-                            send(codec, buffer.toByteString(), vital)
-                        }
-                        codec.releaseOutputBuffer(index, false)
-                    } catch (_: IllegalStateException) {
-                        // The encoder was released while this callback was queued.
-                    }
-                }
-
-                override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
-                    main.post { end("The phone's video encoder failed.") }
-                }
-            }, handler)
-            encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            val input = encoder.createInputSurface()
-            surface = input
-            encoder.start()
+            worker = HandlerThread("varch-cast").also { it.start() }
+            val input = openEncoder(width, height)
 
             // Android 14 requires a callback before a display is created.
             projection.registerCallback(object : MediaProjection.Callback() {
@@ -164,9 +139,88 @@ class CastService : Service() {
                 "varch-cast", width, height, dpi,
                 DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, input, null, null,
             )
+            size = Triple(width, height, dpi)
+            getSystemService(DisplayManager::class.java).registerDisplayListener(rotation, main)
         } catch (e: Exception) {
             // Encoders differ between phones, and a refused size or a revoked grant both surface here.
             end("This phone could not start screen capture.")
+        }
+    }
+
+    /** Starts an encoder for frames of the given size and returns the surface it reads from. */
+    private fun openEncoder(width: Int, height: Int): Surface {
+        val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height).apply {
+            setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+            setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE)
+            setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
+            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, KEYFRAME_SECONDS)
+            // A still screen produces no frames; repeating the last one keeps the viewer fed.
+            setLong(MediaFormat.KEY_REPEAT_PREVIOUS_FRAME_AFTER, 200_000)
+        }
+        val encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+        try {
+            encoder.setCallback(object : MediaCodec.Callback() {
+                override fun onInputBufferAvailable(codec: MediaCodec, index: Int) {}
+
+                override fun onOutputFormatChanged(codec: MediaCodec, format: MediaFormat) {}
+
+                override fun onOutputBufferAvailable(codec: MediaCodec, index: Int, info: MediaCodec.BufferInfo) {
+                    try {
+                        val buffer = codec.getOutputBuffer(index)
+                        // An encoder replaced after a rotation must not write into its successor's stream.
+                        if (buffer != null && info.size > 0 && codec === this@CastService.codec) {
+                            buffer.position(info.offset).limit(info.offset + info.size)
+                            val vital = info.flags and (MediaCodec.BUFFER_FLAG_KEY_FRAME or MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0
+                            send(codec, buffer.toByteString(), vital)
+                        }
+                        codec.releaseOutputBuffer(index, false)
+                    } catch (_: IllegalStateException) {
+                        // The encoder was released while this callback was queued.
+                    }
+                }
+
+                override fun onError(codec: MediaCodec, e: MediaCodec.CodecException) {
+                    main.post { if (codec === this@CastService.codec) end("The phone's video encoder failed.") }
+                }
+            }, Handler(worker!!.looper))
+            encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            val input = encoder.createInputSurface()
+            // Before the start: the encoder's first output describes the video and must pass the check above.
+            codec = encoder
+            surface = input
+            encoder.start()
+            return input
+        } catch (e: Exception) {
+            encoder.release()
+            throw e
+        }
+    }
+
+    /**
+     * Follows the screen when it turns. The stream takes the screen's new
+     * shape, so the viewer fills its window instead of showing a landscape
+     * picture boxed inside a portrait one. A projection allows one display
+     * only, so the display is kept and handed a new encoder.
+     */
+    private fun resize() {
+        val display = display ?: return
+        val next = captureSize()
+        if (ended || next == size) return
+        val (width, height, dpi) = next
+        val oldCodec = codec
+        val oldSurface = surface
+        try {
+            val input = openEncoder(width, height)
+            display.resize(width, height, dpi)
+            display.surface = input
+            size = next
+            congested = false
+        } catch (e: Exception) {
+            end("This phone could not follow the screen's rotation.")
+        } finally {
+            runCatching { oldCodec?.stop() }
+            runCatching { oldCodec?.release() }
+            runCatching { oldSurface?.release() }
         }
     }
 
@@ -188,17 +242,13 @@ class CastService : Service() {
         socket.send(bytes)
     }
 
-    /** The screen size scaled so its longer side is at most [MAX_SIDE], with even dimensions. */
+    /** The screen size as it is turned now, scaled so its longer side is at most [MAX_SIDE], with even dimensions. */
     private fun captureSize(): Triple<Int, Int, Int> {
-        val manager = getSystemService(WindowManager::class.java)
-        val (w, h) = if (Build.VERSION.SDK_INT >= 30) {
-            manager.maximumWindowMetrics.bounds.let { it.width() to it.height() }
-        } else {
-            val metrics = DisplayMetrics()
-            @Suppress("DEPRECATION")
-            manager.defaultDisplay.getRealMetrics(metrics)
-            metrics.widthPixels to metrics.heightPixels
-        }
+        // Read from the display itself: a service's own metrics do not follow rotation.
+        val metrics = DisplayMetrics()
+        @Suppress("DEPRECATION")
+        getSystemService(DisplayManager::class.java).getDisplay(Display.DEFAULT_DISPLAY).getRealMetrics(metrics)
+        val (w, h) = metrics.widthPixels to metrics.heightPixels
         val scale = minOf(1f, MAX_SIDE.toFloat() / maxOf(w, h))
         fun even(value: Int) = ((value * scale).toInt() / 2 * 2).coerceAtLeast(2)
         return Triple(even(w), even(h), resources.displayMetrics.densityDpi)
@@ -210,6 +260,7 @@ class CastService : Service() {
         ended = true
         casting = false
         if (message != null) error = message
+        getSystemService(DisplayManager::class.java).unregisterDisplayListener(rotation)
         runCatching { display?.release() }
         runCatching { codec?.stop() }
         runCatching { codec?.release() }
