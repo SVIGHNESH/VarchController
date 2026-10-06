@@ -182,5 +182,11 @@ private fun PhoneSettings(state: RemoteUi, actions: RemoteActions) {
             accent = Ink.Red,
         )
     }
+    TextKey(
+        "MATCH DESKTOP THEME",
+        { actions.setMatchTheme(!state.matchTheme) },
+        Modifier.padding(top = 8.dp).fillMaxWidth().height(52.dp),
+        active = state.matchTheme,
+    )
     Hint("Alerts check the desktop every 15 minutes and notify when its battery is low or full.")
 }

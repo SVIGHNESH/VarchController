@@ -8,7 +8,8 @@ Read this before you pair a phone you do not control, or run the daemon on a net
 - Type any text and press keys, which includes typing commands into an open terminal.
 - Move the pointer and click.
 - Read and replace the clipboard.
-- Capture the screen.
+- Capture the screen, and watch it live.
+- Open a window on the desktop showing the phone's screen.
 - Close windows, launch the apps in the launcher list, and open web links.
 - Lock, suspend, reboot and shut down the desktop.
 

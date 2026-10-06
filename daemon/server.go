@@ -10,13 +10,14 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/coder/websocket"
 )
 
 const (
-	version      = "0.2.0"
+	version      = "0.3.0"
 	pollInterval = time.Second
 	systemEvery  = 5 // system state is polled every this many ticks
 	writeTimeout = 5 * time.Second
@@ -34,6 +35,9 @@ type Server struct {
 	desk   *Desktop
 	auth   *Auth
 	notify func(title, body string)
+	viewer Viewer
+	// Only one phone may cast at a time; a second would fight over the viewer.
+	casting atomic.Bool
 
 	mu         sync.Mutex
 	clients    map[*client]struct{}
@@ -49,6 +53,7 @@ func NewServer(desk *Desktop, auth *Auth, notify func(title, body string)) *Serv
 		desk:    desk,
 		auth:    auth,
 		notify:  notify,
+		viewer:  mpvViewer,
 		clients: map[*client]struct{}{},
 		kick:    make(chan struct{}, 1),
 	}
@@ -64,6 +69,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/status", s.paired(s.handleStatus))
 	mux.HandleFunc("GET /v1/screenshot", s.paired(s.handleScreenshot))
 	mux.HandleFunc("GET /v1/art", s.paired(s.handleArt))
+	mux.HandleFunc("GET /v1/cast/screen", s.paired(s.handleCastScreen))
+	mux.HandleFunc("GET /v1/cast/phone", s.paired(s.handleCastPhone))
 	mux.HandleFunc("GET /v1/ws", s.paired(s.handleWS))
 	return noBrowsers(mux)
 }

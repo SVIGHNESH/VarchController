@@ -13,5 +13,7 @@ interface RemoteActions {
     fun capture()
     fun setAlerts(enabled: Boolean)
     fun setSlides(enabled: Boolean)
+    fun setMatchTheme(enabled: Boolean)
+    fun setWatching(enabled: Boolean)
     fun unpair()
 }

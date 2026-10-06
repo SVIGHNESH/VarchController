@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -39,7 +40,50 @@ type SystemState struct {
 	Sink         string   `json:"sink"`
 	Sinks        []Sink   `json:"sinks"`
 	Theme        string   `json:"theme"`
+	Colors       *Colors  `json:"colors"`
 	KbdBacklight *float64 `json:"kbd_backlight"`
+}
+
+// Colors are the few colours every Omarchy theme defines. The phone derives
+// the rest of its palette from them. Each is "#rrggbb"; Red may be empty.
+type Colors struct {
+	Background string `json:"background"`
+	Foreground string `json:"foreground"`
+	Accent     string `json:"accent"`
+	Red        string `json:"red"`
+}
+
+var colorLine = regexp.MustCompile(`(?m)^\s*(\w+)\s*=\s*"(#[0-9a-fA-F]{6})"`)
+
+// parseColors reads a theme's colors.toml. It returns nil unless the three
+// colours a palette cannot do without are all present.
+func parseColors(toml string) *Colors {
+	found := map[string]string{}
+	for _, m := range colorLine.FindAllStringSubmatch(toml, -1) {
+		found[m[1]] = strings.ToLower(m[2])
+	}
+	c := &Colors{found["background"], found["foreground"], found["accent"], found["red"]}
+	if c.Background == "" || c.Foreground == "" || c.Accent == "" {
+		return nil
+	}
+	return c
+}
+
+// themeColors returns the active Omarchy theme's colours, if there is one.
+func themeColors() *Colors {
+	state := os.Getenv("XDG_STATE_HOME")
+	if state == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil
+		}
+		state = filepath.Join(home, ".local", "state")
+	}
+	data, err := os.ReadFile(filepath.Join(state, "omarchy", "current", "theme", "colors.toml"))
+	if err != nil {
+		return nil
+	}
+	return parseColors(string(data))
 }
 
 // Catalog is what the phone needs once per connection rather than per poll.
@@ -121,6 +165,7 @@ func (d *Desktop) System(ctx context.Context) SystemState {
 		Temperature: readTemperature(),
 		Profiles:    []string{},
 		Sinks:       d.sinks(ctx),
+		Colors:      themeColors(),
 	}
 	if have("omarchy-toggle-nightlight") {
 		if out, err := d.run.Run(ctx, "omarchy-toggle-nightlight", "--status"); err == nil {

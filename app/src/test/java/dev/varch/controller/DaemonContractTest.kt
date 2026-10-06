@@ -14,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okio.ByteString
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -81,6 +82,17 @@ class DaemonContractTest {
         assertTrue(client.status(endpoint, token).memory > 0)
         val shot = client.bytes(endpoint, token, "/v1/screenshot")
         assertTrue("screenshot should be a JPEG", shot.size > 1000 && shot[0] == 0xFF.toByte() && shot[1] == 0xD8.toByte())
+
+        // The live view delivers at least one JPEG frame of the desktop.
+        val frames = LinkedBlockingQueue<ByteString>()
+        val view = client.openPath(endpoint, token, "/v1/cast/screen", object : WebSocketListener() {
+            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+                frames.put(bytes)
+            }
+        })
+        val frame = frames.poll(5, TimeUnit.SECONDS) ?: error("no live frame arrived")
+        assertTrue("live frame should be a JPEG", frame.size > 500 && frame[0] == 0xFF.toByte() && frame[1] == 0xD8.toByte())
+        view.close(1000, null)
         socket.close(1000, null)
 
         client.unpair(endpoint, token)

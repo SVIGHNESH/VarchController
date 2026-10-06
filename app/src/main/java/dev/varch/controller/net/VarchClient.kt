@@ -56,7 +56,11 @@ class VarchClient(
         Request.Builder().url(endpoint.http(path)).header("Authorization", "Bearer $token")
 
     fun open(endpoint: Endpoint, token: String, listener: WebSocketListener): WebSocket =
-        http.newWebSocket(authorized(endpoint, "/v1/ws", token).build(), listener)
+        openPath(endpoint, token, "/v1/ws", listener)
+
+    /** Opens one of the daemon's WebSockets, such as the screen-cast streams. */
+    fun openPath(endpoint: Endpoint, token: String, path: String, listener: WebSocketListener): WebSocket =
+        http.newWebSocket(authorized(endpoint, path, token).build(), listener)
 
     private suspend fun post(endpoint: Endpoint, path: String, body: JSONObject, token: String? = null): JSONObject {
         val request = Request.Builder()

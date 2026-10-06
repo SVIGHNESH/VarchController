@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
 	"sort"
 )
 
@@ -135,4 +136,63 @@ func (d *Desktop) window(ctx context.Context, r Request) error {
 func (d *Desktop) Screenshot(ctx context.Context) ([]byte, error) {
 	out, err := d.run.Run(ctx, "grim", "-t", "jpeg", "-q", "85", "-")
 	return []byte(out), err
+}
+
+// liveWidth is the widest frame the live view sends. Wider screens are
+// halved, which keeps the stream within what a phone link carries.
+const liveWidth = 1600
+
+// Frame captures the screen for the live view, with the pointer drawn so the
+// phone can see where it is. It asks grim for raw pixels: skipping grim's own
+// compression is faster than decoding it again to shrink the picture.
+func (d *Desktop) Frame(ctx context.Context) (*image.RGBA, error) {
+	out, err := d.run.Run(ctx, "grim", "-c", "-t", "ppm", "-")
+	if err != nil {
+		return nil, err
+	}
+	return shrinkPPM([]byte(out), liveWidth)
+}
+
+// shrinkPPM decodes a binary PPM (P6, 8 bits per channel) and averages 2x2
+// blocks while the picture is wider than maxWidth.
+func shrinkPPM(data []byte, maxWidth int) (*image.RGBA, error) {
+	var magic string
+	var w, h, depth, header int
+	// Sscan, unlike Sscanf, accepts the header's mix of spaces and newlines.
+	if _, err := fmt.Sscan(string(data[:min(len(data), 32)]), &magic, &w, &h, &depth); err != nil || magic != "P6" || depth != 255 || w <= 0 || h <= 0 {
+		return nil, errors.New("unexpected screen capture format")
+	}
+	// The pixels start one whitespace byte after the third header field.
+	for fields := 0; header < len(data) && fields < 4; header++ {
+		if c := data[header]; c == ' ' || c == '\n' {
+			fields++
+		}
+	}
+	pix := data[header:]
+	if len(pix) < w*h*3 {
+		return nil, errors.New("truncated screen capture")
+	}
+	step := 1
+	for w/step > maxWidth {
+		step *= 2
+	}
+	ow, oh := w/step, h/step
+	img := image.NewRGBA(image.Rect(0, 0, ow, oh))
+	n := step * step
+	for y := range oh {
+		row := img.Pix[y*img.Stride:]
+		for x := range ow {
+			var r, g, b int
+			for dy := range step {
+				src := pix[((y*step+dy)*w+x*step)*3:]
+				for dx := range step {
+					r += int(src[dx*3])
+					g += int(src[dx*3+1])
+					b += int(src[dx*3+2])
+				}
+			}
+			row[x*4], row[x*4+1], row[x*4+2], row[x*4+3] = byte(r/n), byte(g/n), byte(b/n), 255
+		}
+	}
+	return img, nil
 }

@@ -22,19 +22,24 @@ import dev.varch.controller.net.Endpoint
 import dev.varch.controller.net.Found
 import dev.varch.controller.net.ServerMessage
 import dev.varch.controller.net.SystemState
+import dev.varch.controller.net.ThemeColors
 import dev.varch.controller.net.VarchClient
 import dev.varch.controller.net.actionBody
 import dev.varch.controller.net.parseServerMessage
+import dev.varch.controller.ui.Ink
+import dev.varch.controller.ui.Palette
 import dev.varch.controller.ui.RemoteActions
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
+import okio.ByteString
 
 enum class Link { Connecting, Online, Offline }
 
@@ -54,8 +59,13 @@ data class RemoteUi(
     /** Text last fetched from the desktop clipboard. */
     val clip: String? = null,
     val alerts: Boolean = false,
+    val matchTheme: Boolean = true,
+    /** Whether the live view of the desktop is open, and its latest frame. */
+    val watching: Boolean = false,
+    val frame: ImageBitmap? = null,
 ) {
     val live get() = link == Link.Online && desktop != null
+
 }
 
 sealed interface PairStep {
@@ -86,8 +96,15 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app), RemoteActions {
 
     var setup by mutableStateOf(SetupUi())
         private set
-    var remote by mutableStateOf(store.load()?.let { RemoteUi(it.hostName, it.endpoint.label, alerts = store.alerts) })
+    var remote by mutableStateOf(
+        store.load()?.let { RemoteUi(it.hostName, it.endpoint.label, alerts = store.alerts, matchTheme = store.matchTheme) },
+    )
         private set
+
+    init {
+        // Open in the colours the desktop had last time, before the connection is up.
+        if (remote != null) applyTheme(store.colors)
+    }
 
     /** While true, the phone's volume buttons flip slides instead of changing volume. */
     private var slides = false
@@ -101,6 +118,9 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app), RemoteActions {
     private var nextId = 1L
     private val awaiting = mutableMapOf<Long, (ServerMessage.Result) -> Unit>()
     private var artId = ""
+    private var viewer: WebSocket? = null
+    private var viewerGeneration = 0
+    private var frames: Job? = null
     private var pendingShare: String? = null
 
     // Pointer motion is summed and flushed at a steady rate rather than sent per touch event.
@@ -124,6 +144,7 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app), RemoteActions {
     fun stop() {
         started = false
         discovery.stop()
+        setWatching(false)
         disconnect()
     }
 
@@ -202,9 +223,12 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app), RemoteActions {
     }
 
     private fun forget(reason: String?) {
+        setWatching(false)
+        CastService.stop(getApplication())
         disconnect()
         BatteryAlerts.cancel(getApplication())
         store.clear()
+        Ink.use(Palette.Default)
         remote = null
         setup = SetupUi(error = reason)
         if (started) discovery.start()
@@ -289,7 +313,13 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app), RemoteActions {
                 )
                 if (next.media.art != artId) loadArt(next.media.art)
             }
-            is ServerMessage.SystemUpdate -> remote = remote?.copy(system = message.system)
+            is ServerMessage.SystemUpdate -> {
+                remote = remote?.copy(system = message.system)
+                if (message.system.colors != store.colors) {
+                    store.colors = message.system.colors
+                    applyTheme(message.system.colors)
+                }
+            }
             is ServerMessage.CatalogUpdate -> remote = remote?.copy(catalog = message.catalog)
             is ServerMessage.Result -> {
                 val waiter = awaiting.remove(message.id)
@@ -297,6 +327,65 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app), RemoteActions {
             }
             null -> {}
         }
+    }
+
+    private fun applyTheme(colors: ThemeColors?) {
+        val matched = colors?.takeIf { store.matchTheme }?.let(Palette::from)
+        Ink.use(matched ?: Palette.Default)
+    }
+
+    override fun setMatchTheme(enabled: Boolean) {
+        store.matchTheme = enabled
+        remote = remote?.copy(matchTheme = enabled)
+        applyTheme(store.colors)
+    }
+
+    // Live view of the desktop
+
+    override fun setWatching(enabled: Boolean) {
+        if (enabled == (viewer != null)) return
+        viewer?.close(1000, null)
+        viewer = null
+        frames?.cancel()
+        frames = null
+        remote = remote?.copy(watching = enabled, frame = if (enabled) remote?.frame else null)
+        val pairing = store.load()
+        if (!enabled || pairing == null) return
+
+        // Frames can arrive faster than the phone decodes them; only the newest is kept.
+        val inbox = Channel<ByteString>(Channel.CONFLATED)
+        frames = viewModelScope.launch {
+            for (bytes in inbox) {
+                val image = withContext(Dispatchers.Default) {
+                    val data = bytes.toByteArray()
+                    BitmapFactory.decodeByteArray(data, 0, data.size)?.asImageBitmap()
+                }
+                if (image != null) remote = remote?.copy(frame = image)
+            }
+        }
+        val gen = ++viewerGeneration
+        fun ended(message: String?) = viewModelScope.launch {
+            if (gen != viewerGeneration || viewer == null) return@launch
+            setWatching(false)
+            if (message != null) notify(message)
+        }
+        viewer = client.openPath(pairing.endpoint, pairing.token, "/v1/cast/screen", object : WebSocketListener() {
+            override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
+                inbox.trySend(bytes)
+            }
+
+            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                webSocket.close(1000, null)
+            }
+
+            override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                ended(reason.replaceFirstChar(Char::uppercase).ifEmpty { null })
+            }
+
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                ended("Live view lost its connection")
+            }
+        })
     }
 
     private fun loadArt(id: String) {

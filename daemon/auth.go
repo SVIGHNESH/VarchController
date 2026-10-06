@@ -107,6 +107,19 @@ func (a *Auth) Check(token string) bool {
 	return ok
 }
 
+// Name returns the name a paired device gave when it paired.
+func (a *Auth) Name(token string) string {
+	h := hashToken(token)
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	for _, d := range a.devices {
+		if d.TokenHash == h {
+			return d.Name
+		}
+	}
+	return "A phone"
+}
+
 // StartPairing begins a pairing and returns its id and the code that must be
 // shown to the person sitting at the laptop.
 func (a *Auth) StartPairing(deviceName string) (id, code string, err error) {

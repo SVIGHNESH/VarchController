@@ -14,7 +14,7 @@ These two endpoints need no token.
 ### `GET /v1/info`
 
 ```json
-{ "name": "VARCH", "version": "0.2.0" }
+{ "name": "VARCH", "version": "0.3.0" }
 ```
 
 ### `POST /v1/pair/start`
@@ -49,9 +49,32 @@ Everything below needs `Authorization: Bearer <token>` and returns `401` without
 | `GET /v1/status` | Returns the `system` object. The battery alerts use this. |
 | `GET /v1/screenshot` | A JPEG of every monitor. |
 | `GET /v1/art` | The current track's cover image, or `404`. |
+| `GET /v1/cast/screen` | A WebSocket that streams the desktop's screen to the phone. |
+| `GET /v1/cast/phone` | A WebSocket that receives the phone's screen. |
 | `POST /v1/unpair` | Revokes the token that made the request. |
 
-## WebSocket
+## Screen casting
+
+### `GET /v1/cast/screen`
+
+The daemon sends binary messages, each one a complete JPEG frame.
+It sends at most ten a second, halves frames wider than 1600 pixels, draws the pointer into them, and skips frames identical to the last one sent.
+It captures the next frame only after the previous one is written, so a slow link lowers the frame rate.
+The phone sends nothing and closes the socket to stop.
+
+### `GET /v1/cast/phone`
+
+The phone sends binary messages that together form an H.264 Annex B stream, starting with the SPS and PPS.
+The daemon pipes them to `mpv`.
+
+| Status | Meaning |
+| --- | --- |
+| `409` | Another phone is already casting. |
+| `503` | The desktop could not start `mpv`. |
+
+Closing the viewer window closes the socket.
+
+## Main WebSocket
 
 ### Messages from the daemon
 
@@ -102,11 +125,13 @@ It sends a new position only when the real one differs from the expected one by 
   "profile": "balanced", "profiles": ["power-saver", "balanced", "performance"],
   "sink": "alsa_output...", "sinks": [{ "name": "alsa_output...", "label": "Built-in Audio" }],
   "theme": "Ethereal",
+  "colors": { "background": "#1a1b26", "foreground": "#a9b1d6", "accent": "#7aa2f7", "red": "#f7768e" },
   "kbd_backlight": null
 } }
 ```
 
-`battery`, `night_light`, `wifi`, `bluetooth` and `kbd_backlight` are `null` when the desktop has no such feature.
+`battery`, `night_light`, `wifi`, `bluetooth`, `colors` and `kbd_backlight` are `null` when the desktop has no such feature.
+`colors` comes from the active Omarchy theme's `colors.toml`, and `red` may be empty.
 
 `result` answers a request.
 

@@ -11,6 +11,7 @@ The daemon goes on the desktop you want to control, and the app goes on the phon
 - A running Hyprland session.
 - These commands on the `PATH`: `wpctl`, `pactl`, `brightnessctl`, `hyprctl`, `wtype`, `wl-copy`, `wl-paste`, `grim`, `nmcli`, `bluetoothctl`, `powerprofilesctl`, `notify-send`.
 - `avahi-publish` if you want the phone to find the desktop on its own.
+- `mpv` if you want to cast the phone's screen to the desktop.
 
 Night light uses `omarchy-toggle-nightlight` and themes use the `omarchy-theme-*` commands.
 On a desktop without them the app hides those controls.
