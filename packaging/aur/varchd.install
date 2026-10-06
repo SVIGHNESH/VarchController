@@ -1,0 +1,12 @@
+post_install() {
+  cat <<MSG
+==> Start the daemon for your user, inside a Hyprland session:
+      systemctl --user enable --now varchd.service
+==> It listens on TCP port 7421. Open that port if a firewall is active.
+==> Setup and pairing: /usr/share/doc/varchd/setup.md
+MSG
+}
+
+post_upgrade() {
+  echo '==> Restart the daemon to pick up the update: systemctl --user restart varchd.service'
+}

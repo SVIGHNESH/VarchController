@@ -1,0 +1,59 @@
+# Maintainer: Vighnesh Shukla <125472943+SVIGHNESH@users.noreply.github.com>
+
+pkgname=varchd
+pkgver=0.3.0 # x-release-please-version
+pkgrel=1
+pkgdesc='Daemon that lets a paired Android phone control a Hyprland desktop'
+arch=('x86_64' 'aarch64')
+url='https://github.com/SVIGHNESH/VarchController'
+license=('MIT')
+depends=(
+  'glibc'
+  'hyprland'
+  'wireplumber'
+  'libpulse'
+  'brightnessctl'
+  'wtype'
+  'wl-clipboard'
+  'grim'
+  'networkmanager'
+  'bluez-utils'
+  'power-profiles-daemon'
+  'libnotify'
+)
+makedepends=('go')
+optdepends=(
+  'avahi: let the phone find the desktop on its own'
+  'mpv: cast the phone screen to the desktop'
+)
+install=varchd.install
+# The release workflow fills in the checksum when it publishes to the AUR.
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+_src="VarchController-$pkgver"
+
+build() {
+  cd "$_src/daemon"
+  export CGO_CPPFLAGS="$CPPFLAGS"
+  export CGO_CFLAGS="$CFLAGS"
+  export CGO_CXXFLAGS="$CXXFLAGS"
+  export CGO_LDFLAGS="$LDFLAGS"
+  export GOFLAGS='-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw'
+  go build -o varchd .
+}
+
+check() {
+  cd "$_src/daemon"
+  go test ./...
+}
+
+package() {
+  cd "$_src"
+  install -Dm755 daemon/varchd "$pkgdir/usr/bin/varchd"
+  # The unit in the repo points at ~/.local/bin, where `make install` puts the binary.
+  sed 's|^ExecStart=.*|ExecStart=/usr/bin/varchd|' daemon/varchd.service |
+    install -Dm644 /dev/stdin "$pkgdir/usr/lib/systemd/user/varchd.service"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 docs/setup.md docs/security.md docs/protocol.md -t "$pkgdir/usr/share/doc/$pkgname"
+}

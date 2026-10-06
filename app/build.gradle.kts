@@ -4,6 +4,13 @@ plugins {
     id("io.github.takahirom.roborazzi")
 }
 
+// release-please bumps this line; versionCode follows from it.
+val appVersion = "0.3.0" // x-release-please-version
+
+// The release keystore comes from the environment, so it never lives in the repo.
+// Without it, assembleRelease still builds, and leaves the APK unsigned.
+val releaseKeystore: String? = System.getenv("RELEASE_KEYSTORE_FILE")
+
 android {
     namespace = "dev.varch.controller"
     compileSdk = 37
@@ -12,13 +19,27 @@ android {
         applicationId = "dev.varch.controller"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.3.0"
+        versionCode = appVersion.substringBefore('-').split('.').map(String::toInt)
+            .let { (major, minor, patch) -> major * 10_000 + minor * 100 + patch }
+        versionName = appVersion
+    }
+
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                // A PKCS12 keystore uses one password for the store and the key.
+                keyPassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 
