@@ -99,6 +99,7 @@ VARCHD_ADDR=127.0.0.1:17421 VARCHD_LOG=/tmp/varchd.log ./gradlew :app:testDebugU
 
 - Casting the phone's screen has never run on a phone.
   The desktop half is tested with a synthetic H.264 stream, and `CastService` is written against the Android API without a device to run it on.
+  That includes following the phone's rotation: the viewer is checked against a stream that changes shape midway, and the phone's side of it is untested.
 - The live view of the desktop is tested from the daemon to the app's network client, and its screen is rendered, but it has not been used on a phone.
 - The 0.2.0 features have been tested on the desktop side and in rendered screenshots, and not yet on a physical phone.
   That covers trackpad feel, live typing through a phone keyboard, the tiles, the widget, the share sheet and battery alerts.
