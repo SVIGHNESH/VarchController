@@ -21,12 +21,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import dev.varch.controller.BatteryAlerts
 import dev.varch.controller.RemoteUi
 import dev.varch.controller.net.Action
 import dev.varch.controller.net.SystemState
 import kotlinx.coroutines.delay
+
+private const val CREATOR = "Vighnesh Shukla"
+private const val CREATOR_URL = "https://github.com/SVIGHNESH"
 
 private val PROFILE_LABELS = mapOf("power-saver" to "SAVER", "balanced" to "BALANCED", "performance" to "FAST")
 
@@ -145,7 +149,18 @@ fun SystemScreen(state: RemoteUi, actions: RemoteActions, themesOpen: Boolean = 
 
         SectionHeader(++section, "THIS PHONE", Modifier.padding(top = 22.dp))
         PhoneSettings(state, actions)
+
+        SectionHeader(++section, "CREDITS", Modifier.padding(top = 22.dp))
+        Credits()
     }
+}
+
+@Composable
+private fun Credits() {
+    val links = LocalUriHandler.current
+    // A phone with no browser has nothing to open the link with.
+    TextKey(CREATOR.uppercase(), { runCatching { links.openUri(CREATOR_URL) } }, Modifier.padding(top = 10.dp).fillMaxWidth().height(52.dp))
+    Hint("Varch Controller is made by $CREATOR. Tap to open ${CREATOR_URL.substringAfter("://")}.")
 }
 
 @Composable
