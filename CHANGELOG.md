@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/SVIGHNESH/VarchController/compare/v0.4.0...v0.5.0) (2026-10-06)
+
+
+### Features
+
+* add credits with a link to the creator's GitHub ([#6](https://github.com/SVIGHNESH/VarchController/issues/6)) ([f3757f8](https://github.com/SVIGHNESH/VarchController/commit/f3757f8cab09626cabc6f70e59e128467af68175))
+
 ## [0.4.0](https://github.com/SVIGHNESH/VarchController/compare/v0.3.0...v0.4.0) (2026-10-06)
 
 

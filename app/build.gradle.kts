@@ -5,7 +5,7 @@ plugins {
 }
 
 // release-please bumps this line; versionCode follows from it.
-val appVersion = "0.4.0" // x-release-please-version
+val appVersion = "0.5.0" // x-release-please-version
 
 // The release keystore comes from the environment, so it never lives in the repo.
 // Without it, assembleRelease still builds, and leaves the APK unsigned.
