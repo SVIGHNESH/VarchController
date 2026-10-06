@@ -58,5 +58,5 @@ If the phone cannot connect, the firewall is the usual cause.
 
 ## Licenses
 
-This repository does not have a project license yet.
+Varch Controller is released under the [MIT License](LICENSE).
 The app bundles JetBrains Mono (Nerd Font build) under the SIL Open Font License 1.1, included in [licenses/JetBrainsMono-OFL.txt](licenses/JetBrainsMono-OFL.txt).
