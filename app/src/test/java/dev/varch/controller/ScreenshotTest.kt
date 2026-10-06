@@ -195,6 +195,11 @@ class ScreenshotTest {
     @Test
     fun systemThemes() = shoot("system_themes") { SystemScreen(online.copy(alerts = true), NoActions, themesOpen = true) }
 
+    /** Tall enough to show the whole column, down to the credits. */
+    @Test
+    @Config(qualifiers = "w411dp-h1180dp-xxhdpi")
+    fun systemCredits() = shoot("system_credits") { SystemScreen(online, NoActions) }
+
     @Test
     fun share() = shell("share", online.copy(clip = "git clone https://github.com/SVIGHNESH/VarchController"), Tab.Share)
 

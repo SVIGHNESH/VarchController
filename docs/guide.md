@@ -81,6 +81,7 @@ See [Setup](setup.md#app-launcher) for how to edit that list.
 - POWER PROFILE, AUDIO OUTPUT and THEME show the current choice lit.
 - LOCK is a tap.
   SUSPEND, REBOOT and SHUT DOWN need a hold.
+- CREDITS names the app's creator, Vighnesh Shukla, and the key opens their GitHub profile.
 
 ### Matching the desktop theme
 
