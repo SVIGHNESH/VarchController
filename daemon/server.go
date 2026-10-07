@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	version      = "0.5.0" // x-release-please-version
+	version      = "0.6.0" // x-release-please-version
 	pollInterval = time.Second
 	systemEvery  = 5 // system state is polled every this many ticks
 	writeTimeout = 5 * time.Second

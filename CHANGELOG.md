@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/SVIGHNESH/VarchController/compare/v0.5.0...v0.6.0) (2026-10-07)
+
+
+### Features
+
+* add now playing, status and workspace home-screen widgets ([#8](https://github.com/SVIGHNESH/VarchController/issues/8)) ([9beee74](https://github.com/SVIGHNESH/VarchController/commit/9beee740d803efc65cc919f432d06e848dffc827))
+
 ## [0.5.0](https://github.com/SVIGHNESH/VarchController/compare/v0.4.0...v0.5.0) (2026-10-06)
 
 
