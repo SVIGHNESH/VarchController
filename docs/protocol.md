@@ -15,7 +15,7 @@ These two endpoints need no token.
 
 <!-- x-release-please-start-version -->
 ```json
-{ "name": "VARCH", "version": "0.5.0" }
+{ "name": "VARCH", "version": "0.6.0" }
 ```
 <!-- x-release-please-end -->
 
