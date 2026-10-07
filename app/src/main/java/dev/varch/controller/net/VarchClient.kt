@@ -41,8 +41,10 @@ class VarchClient(
     suspend fun action(endpoint: Endpoint, token: String, action: String, value: Double = 0.0, text: String = ""): ServerMessage.Result =
         parseResult(post(endpoint, "/v1/action", actionBody(action, value, text), token))
 
-    suspend fun status(endpoint: Endpoint, token: String): SystemState =
-        parseSystem(call(authorized(endpoint, "/v1/status", token).build()))
+    suspend fun status(endpoint: Endpoint, token: String): SystemState = parseSystem(json(endpoint, token, "/v1/status"))
+
+    /** Fetches a JSON endpoint such as /v1/state, unparsed, for callers that store it. */
+    suspend fun json(endpoint: Endpoint, token: String, path: String): JSONObject = call(authorized(endpoint, path, token).build())
 
     /** Fetches an image endpoint such as /v1/screenshot or /v1/art. */
     suspend fun bytes(endpoint: Endpoint, token: String, path: String): ByteArray = withContext(Dispatchers.IO) {

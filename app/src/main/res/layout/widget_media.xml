@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Drawn by the launcher, which has no app theme behind it, so the background is not overdraw. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ground"
+    android:orientation="vertical"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp"
+    tools:ignore="Overdraw">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="22dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_host"
+            style="@style/WidgetLabel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:text="@string/widget_host" />
+
+        <TextView
+            android:id="@+id/widget_sync"
+            style="@style/WidgetLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="0dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_info"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingBottom="6dp">
+
+        <ImageView
+            android:id="@+id/widget_art"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/widget_box"
+            android:importantForAccessibility="no"
+            android:padding="1dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_title"
+                style="@style/WidgetTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/widget_idle" />
+
+            <TextView
+                android:id="@+id/widget_artist"
+                style="@style/WidgetBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/widget_previous"
+            style="@style/WidgetKey.Icon"
+            android:contentDescription="@string/widget_previous"
+            android:src="@drawable/ic_previous" />
+
+        <ImageButton
+            android:id="@+id/widget_play"
+            style="@style/WidgetKey.Icon.Next"
+            android:contentDescription="@string/tile_play_pause"
+            android:src="@drawable/ic_play" />
+
+        <ImageButton
+            android:id="@+id/widget_next"
+            style="@style/WidgetKey.Icon.Next"
+            android:contentDescription="@string/widget_next"
+            android:src="@drawable/ic_next" />
+
+        <TextView
+            android:id="@+id/widget_volume_down"
+            style="@style/WidgetKey.Next"
+            android:text="@string/widget_minus"
+            android:contentDescription="@string/widget_volume_down"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/widget_volume"
+            style="@style/WidgetKey.Next"
+            android:text="@string/widget_volume"
+            android:contentDescription="@string/tile_mute" />
+
+        <TextView
+            android:id="@+id/widget_volume_up"
+            style="@style/WidgetKey.Next"
+            android:text="@string/widget_plus"
+            android:contentDescription="@string/widget_volume_up"
+            android:textSize="18sp" />
+    </LinearLayout>
+</LinearLayout>

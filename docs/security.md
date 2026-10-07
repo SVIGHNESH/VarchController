@@ -49,5 +49,7 @@ A web page open in a browser on your network therefore cannot call it.
 ## On the phone
 
 - The token sits in the app's private storage and is excluded from cloud backup and device transfer.
-- The quick-settings tiles and the widget can send three actions only: play/pause, mute and lock.
+- The quick-settings tiles and the widgets can send a short list of actions only: play/pause, next and previous track, volume step and mute, workspace switch, mic mute, night light and lock.
+  Nothing that types, clicks, launches, closes or powers off can be sent from them.
+- The widgets show the track title, the workspaces and the status readouts on the home screen, where anyone holding the unlocked phone can read them.
 - Text shared to the app from other apps goes to the desktop, so do not share secrets to it by accident.

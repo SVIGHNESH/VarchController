@@ -14,6 +14,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -135,6 +136,18 @@ class ProtocolTest {
         assertEquals("", BatteryAlerts.eventFor(BatteryInfo(15, charging = true, full = false)))
         assertEquals("", BatteryAlerts.eventFor(BatteryInfo(60, charging = false, full = false)))
         assertEquals("full", BatteryAlerts.eventFor(BatteryInfo(100, charging = false, full = true)))
+    }
+
+    @Test
+    fun widgetSnapshotLastsUntilTheNextPairing() {
+        val store = Store(RuntimeEnvironment.getApplication())
+        assertNull(store.snapshot)
+        val snapshot = Snapshot("""{"host":"VARCH"}""", "{}", at = 42, online = false, art = "cover-1")
+        store.snapshot = snapshot
+        assertEquals(snapshot, store.snapshot)
+        // Another desktop's track and workspaces must not show under the new one's name.
+        store.save(Pairing(Endpoint("10.0.0.2"), "TOWER", "token"))
+        assertNull(store.snapshot)
     }
 
     @Test

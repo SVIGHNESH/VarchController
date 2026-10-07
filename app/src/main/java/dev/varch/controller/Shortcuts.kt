@@ -1,8 +1,5 @@
 package dev.varch.controller
 
-import android.app.PendingIntent
-import android.appwidget.AppWidgetManager
-import android.appwidget.AppWidgetProvider
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -10,7 +7,6 @@ import android.os.Handler
 import android.os.Looper
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import android.widget.RemoteViews
 import android.widget.Toast
 import dev.varch.controller.net.Action
 import dev.varch.controller.net.VarchClient
@@ -22,30 +18,36 @@ import kotlinx.coroutines.launch
 
 /**
  * One-shot actions for surfaces that live outside the app: quick-settings
- * tiles and the home-screen widget. Each press is a single HTTP request.
+ * tiles and the home-screen widgets. Each press is a single HTTP request.
  */
 object OneShot {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val client by lazy { VarchClient() }
 
     /** Actions these surfaces may send. */
-    val allowed = setOf(Action.PLAY_PAUSE, Action.MUTE, Action.LOCK)
+    val allowed = setOf(
+        Action.PLAY_PAUSE, Action.NEXT, Action.PREVIOUS, Action.MUTE, Action.VOLUME_STEP,
+        Action.WORKSPACE, Action.MIC_MUTE, Action.NIGHT_LIGHT, Action.LOCK,
+    )
 
-    fun send(context: Context, action: String, onDone: () -> Unit = {}) {
+    /** [onDone] hears whether the desktop answered at all. */
+    fun send(context: Context, action: String, value: Double = 0.0, onDone: (reached: Boolean) -> Unit = {}) {
         val app = context.applicationContext
         val pairing = Store(app).load()
         if (pairing == null || action !in allowed) {
             if (pairing == null) toast(app, R.string.shortcut_not_paired)
-            onDone()
+            onDone(pairing != null)
             return
         }
         scope.launch {
+            var reached = true
             try {
-                if (!client.action(pairing.endpoint, pairing.token, action).ok) toast(app, R.string.shortcut_failed)
+                if (!client.action(pairing.endpoint, pairing.token, action, value).ok) toast(app, R.string.shortcut_failed)
             } catch (_: IOException) {
+                reached = false
                 toast(app, R.string.shortcut_unreachable)
             } finally {
-                onDone()
+                onDone(reached)
             }
         }
     }
@@ -71,30 +73,27 @@ class MuteTile : ActionTile(Action.MUTE)
 
 class LockTile : ActionTile(Action.LOCK)
 
-/** Receives widget button presses. */
+/** Receives widget key presses. One without an action only asks for fresh state. */
 class ActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        val action = intent.getStringExtra(EXTRA_ACTION) ?: return
         val pending = goAsync()
-        OneShot.send(context, action) { pending.finish() }
+        val action = intent.getStringExtra(EXTRA_ACTION)
+        if (action == null) {
+            Widgets.refresh(context) { pending.finish() }
+            return
+        }
+        OneShot.send(context, action, intent.getDoubleExtra(EXTRA_VALUE, 0.0)) { reached ->
+            if (reached) {
+                Widgets.refresh(context, Widgets.SETTLE_MS) { pending.finish() }
+            } else {
+                Widgets.unreachable(context)
+                pending.finish()
+            }
+        }
     }
 
     companion object {
         const val EXTRA_ACTION = "action"
-    }
-}
-
-class RemoteWidget : AppWidgetProvider() {
-    override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-        val views = RemoteViews(context.packageName, R.layout.widget_remote)
-        val buttons = listOf(R.id.widget_play to Action.PLAY_PAUSE, R.id.widget_mute to Action.MUTE, R.id.widget_lock to Action.LOCK)
-        buttons.forEachIndexed { index, (view, action) ->
-            val intent = Intent(context, ActionReceiver::class.java).putExtra(ActionReceiver.EXTRA_ACTION, action)
-            views.setOnClickPendingIntent(
-                view,
-                PendingIntent.getBroadcast(context, index, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE),
-            )
-        }
-        ids.forEach { manager.updateAppWidget(it, views) }
+        const val EXTRA_VALUE = "value"
     }
 }

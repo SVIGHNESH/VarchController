@@ -66,6 +66,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /v1/pair/finish", s.handlePairFinish)
 	mux.HandleFunc("POST /v1/unpair", s.paired(s.handleUnpair))
 	mux.HandleFunc("POST /v1/action", s.paired(s.handleAction))
+	mux.HandleFunc("GET /v1/state", s.paired(s.handleState))
 	mux.HandleFunc("GET /v1/status", s.paired(s.handleStatus))
 	mux.HandleFunc("GET /v1/screenshot", s.paired(s.handleScreenshot))
 	mux.HandleFunc("GET /v1/art", s.paired(s.handleArt))
@@ -212,6 +213,12 @@ func (s *Server) handleAction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, s.perform(r.Context(), req))
+}
+
+// handleState and handleStatus are the one-shot forms of the "state" and
+// "system" messages, for callers that do not hold a connection open.
+func (s *Server) handleState(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, s.desk.State(r.Context()))
 }
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {

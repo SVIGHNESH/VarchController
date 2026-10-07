@@ -38,8 +38,45 @@
             android:exported="false" />
 
         <receiver
+            android:name=".MediaWidget"
+            android:exported="false"
+            android:label="@string/widget_media_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_media_info" />
+        </receiver>
+
+        <receiver
+            android:name=".WorkspaceWidget"
+            android:exported="false"
+            android:label="@string/widget_workspaces_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_workspaces_info" />
+        </receiver>
+
+        <receiver
+            android:name=".SystemWidget"
+            android:exported="false"
+            android:label="@string/widget_system_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_system_info" />
+        </receiver>
+
+        <receiver
             android:name=".RemoteWidget"
-            android:exported="false">
+            android:exported="false"
+            android:label="@string/widget_remote_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

@@ -1,9 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ground">#0B0C0A</color>
+    <color name="panel">#141512</color>
+    <color name="rule">#2A2C26</color>
+    <color name="faint">#55574D</color>
+    <color name="dim">#8F8C7C</color>
     <color name="bone">#E9E4D6</color>
     <color name="amber">#FFB000</color>
+    <color name="red">#EF5350</color>
     <style name="Theme.Varch" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/ground</item>
+    </style>
+
+    <!-- Widget text mirrors Type in ui/Theme.kt, which the launcher cannot reach. -->
+    <style name="WidgetLabel">
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:fontFamily">@font/jetbrains_mono_regular</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textColor">@color/dim</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+    <style name="WidgetTitle">
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:fontFamily">@font/jetbrains_mono_bold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/bone</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+    <style name="WidgetBody">
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:fontFamily">@font/jetbrains_mono_regular</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/dim</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+    <style name="WidgetKey">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/widget_key</item>
+        <item name="android:gravity">center</item>
+        <item name="android:fontFamily">@font/jetbrains_mono_bold</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:letterSpacing">0.1</item>
+        <item name="android:textColor">@color/bone</item>
+        <item name="android:maxLines">1</item>
+    </style>
+    <style name="WidgetKey.Next">
+        <item name="android:layout_marginStart">6dp</item>
+    </style>
+    <!-- Ten keys share one row, so the gap between them is narrower. -->
+    <style name="WidgetKey.Tight">
+        <item name="android:layout_marginStart">3dp</item>
+    </style>
+    <style name="WidgetKey.Icon">
+        <item name="android:scaleType">center</item>
+        <item name="android:tint">@color/bone</item>
+    </style>
+    <style name="WidgetKey.Icon.Next">
+        <item name="android:layout_marginStart">6dp</item>
+    </style>
+    <style name="WidgetReadout">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@drawable/widget_box</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:paddingStart">8dp</item>
+        <item name="android:paddingEnd">4dp</item>
+    </style>
+    <!-- The gap trails each box but the last, so the row stays flush when the first one is hidden. -->
+    <style name="WidgetReadout.Gap">
+        <item name="android:layout_marginEnd">6dp</item>
     </style>
 </resources>

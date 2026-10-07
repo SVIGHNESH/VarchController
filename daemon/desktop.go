@@ -134,6 +134,17 @@ func (d *Desktop) Do(ctx context.Context, r Request) (string, error) {
 			return "", err
 		}
 		_, err = d.run.Run(ctx, "wpctl", "set-volume", "@DEFAULT_AUDIO_SINK@", strconv.FormatFloat(v, 'f', 2, 64))
+	case "volume.step":
+		// A caller without live state, such as a widget, cannot send an absolute level.
+		pct := int(math.Round(math.Abs(v) * 100))
+		if math.IsNaN(v) || pct < 1 || pct > 100 {
+			return "", errors.New("step must be between -1 and 1, and not 0")
+		}
+		sign := "+"
+		if v < 0 {
+			sign = "-"
+		}
+		_, err = d.run.Run(ctx, "wpctl", "set-volume", "-l", "1.0", "@DEFAULT_AUDIO_SINK@", strconv.Itoa(pct)+"%"+sign)
 	case "volume.mute_toggle":
 		_, err = d.run.Run(ctx, "wpctl", "set-mute", "@DEFAULT_AUDIO_SINK@", "toggle")
 	case "brightness.set":

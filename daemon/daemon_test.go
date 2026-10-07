@@ -136,6 +136,8 @@ func TestDesktopActions(t *testing.T) {
 		want string
 	}{
 		{Request{Action: "volume.set", Value: 0.5}, "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.50"},
+		{Request{Action: "volume.step", Value: 0.05}, "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+"},
+		{Request{Action: "volume.step", Value: -0.1}, "wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 10%-"},
 		{Request{Action: "volume.mute_toggle"}, "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"},
 		{Request{Action: "brightness.set", Value: 0.4}, "brightnessctl -q set 40%"},
 		{Request{Action: "brightness.set"}, "brightnessctl -q set 1%"},
@@ -204,6 +206,7 @@ func TestDesktopRejectsBadInput(t *testing.T) {
 	d, r, _, p := newDesktop(t)
 	bad := []Request{
 		{Action: "volume.set", Value: 1.5}, {Action: "volume.set", Value: -0.1}, {Action: "brightness.set", Value: 2},
+		{Action: "volume.step"}, {Action: "volume.step", Value: 1.5}, {Action: "volume.step", Value: -2},
 		{Action: "workspace.switch"}, {Action: "workspace.switch", Value: 11}, {Action: "workspace.switch", Value: 2.5},
 		{Action: "window.close", Text: `0x1" }) os.exit(`}, {Action: "window.move", Text: "0xa1", Value: 99},
 		{Action: "key.press", Text: "XF86PowerOff"}, {Action: "key.press", Text: "-M"}, {Action: "key.press", Text: "a", Value: 64},
@@ -530,6 +533,26 @@ func TestServerEndToEnd(t *testing.T) {
 	}
 	if st := call("wrong"); st != http.StatusUnauthorized {
 		t.Errorf("POST /v1/action without pairing: %d", st)
+	}
+
+	// The one-shot form of the state message, which the widgets draw from.
+	state := func(token string) (int, State) {
+		req, _ := http.NewRequest("GET", ts.URL+"/v1/state", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		res, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer res.Body.Close()
+		var out State
+		json.NewDecoder(res.Body).Decode(&out)
+		return res.StatusCode, out
+	}
+	if st, out := state(fin.Token); st != 200 || out.Host != "VARCH" {
+		t.Errorf("GET /v1/state: %d %+v", st, out)
+	}
+	if st, _ := state("wrong"); st != http.StatusUnauthorized {
+		t.Errorf("GET /v1/state without pairing: %d", st)
 	}
 }
 

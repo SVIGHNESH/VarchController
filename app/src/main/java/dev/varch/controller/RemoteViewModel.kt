@@ -146,6 +146,8 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app), RemoteActions {
         discovery.stop()
         setWatching(false)
         disconnect()
+        // The widgets are what the user sees next, so they should not show what was true before the app opened.
+        Widgets.refresh(getApplication())
     }
 
     override fun onCleared() = stop()
@@ -193,6 +195,7 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app), RemoteActions {
             try {
                 val token = client.finishPairing(step.endpoint, step.pairingId, code)
                 store.save(Pairing(step.endpoint, step.hostName, token))
+                Widgets.refresh(getApplication())
                 setup = SetupUi()
                 remote = RemoteUi(step.hostName, step.endpoint.label)
                 discovery.stop()
@@ -228,6 +231,7 @@ class RemoteViewModel(app: Application) : AndroidViewModel(app), RemoteActions {
         disconnect()
         BatteryAlerts.cancel(getApplication())
         store.clear()
+        Widgets.render(getApplication())
         Ink.use(Palette.Default)
         remote = null
         setup = SetupUi(error = reason)
